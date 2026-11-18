@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Tokens do design system em canais RGB (consumidos via tailwind.config.js) */
+  :root {
+    --color-canvas: 9 9 11;
+    --color-surface: 17 17 20;
+    --color-surface-raised: 24 24 28;
+    --color-line: 39 39 42;
+    --color-line-strong: 63 63 70;
+    --color-fg: 244 244 245;
+    --color-fg-muted: 161 161 170;
+    --color-fg-subtle: 113 113 122;
+    --color-brand: 52 211 153;
+    --color-brand-soft: 16 185 129;
+    --color-brand-contrast: 2 44 34;
+    --color-accent: 129 140 248;
+    --color-warning: 251 191 36;
+    --color-danger: 251 113 133;
+  }
+
+  body {
+    @apply bg-zinc-950 text-zinc-100 font-sans;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-zinc-950;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-zinc-800 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-700;
+  }
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgb(var(--color-line) / 0.45) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--color-line) / 0.45) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      180deg,
+      rgb(var(--color-fg)) 0%,
+      rgb(var(--color-fg) / 0.55) 100%
+    );
+  }
+
+  .glow-brand {
+    background: radial-gradient(
+      ellipse at center,
+      rgb(var(--color-brand) / 0.22) 0%,
+      transparent 65%
+    );
+  }
+
+  .mask-fade-x {
+    mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  }
+}
