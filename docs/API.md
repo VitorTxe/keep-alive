@@ -1,6 +1,6 @@
 # Referência da API REST
 
-Todas as rotas estão montadas sob o prefixo `/api` (definido em [backend/src/server.js](../backend/src/server.js)).
+Todas as rotas estão montadas sob o prefixo `/api` (definido em [backend/src/server.ts](../backend/src/server.ts)).
 
 > A especificação formal em formato **OpenAPI 3.0** está disponível em [openapi.yaml](openapi.yaml) e pode ser importada diretamente no Postman, Insomnia ou Swagger Editor.
 

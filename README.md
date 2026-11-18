@@ -27,8 +27,8 @@ O **Keep-Alive Monitor** executa verificações HTTP (`GET`) periódicas (via Cr
 
 | Camada | Tecnologias |
 | :--- | :--- |
-| **Frontend** | React 18, Vite, Tailwind CSS, React Router v7, Framer Motion, Lenis, Lucide React |
-| **Backend** | Node.js (ESM), Express 4, `@supabase/supabase-js` |
+| **Frontend** | React 18, TypeScript (`strict`), Vite, Tailwind CSS, React Router v7, Framer Motion, Lenis, Lucide React |
+| **Backend** | Node.js (ESM), TypeScript (`strict`), Express 4, `@supabase/supabase-js` |
 | **Banco & Auth** | Supabase (PostgreSQL, Supabase Auth, Row Level Security) |
 | **E-mail** | Brevo API (`v3/smtp/email`) |
 
@@ -44,19 +44,23 @@ monitoramento/
 │   │   ├── repositories/    # projectRepository, pingLogRepository, mappers
 │   │   ├── routes/          # Definição das rotas /api/*
 │   │   ├── services/        # pingerService e alertService
-│   │   └── server.js        # Entrypoint Express e error handler global
+│   │   ├── types/           # Contratos de domínio, DTOs e augmentation do Express
+│   │   └── server.ts        # Entrypoint Express e error handler global
 │   ├── supabase/
 │   │   └── schema.sql       # DDL completo do banco de dados
+│   ├── tsconfig.json
 │   └── .env.example
 ├── frontend/
 │   ├── src/
 │   │   ├── components/      # Componentes do Dashboard, Auth e Landing Page
-│   │   ├── hooks/           # Hooks customizados (sessão, toast, scroll, etc.)
+│   │   ├── hooks/           # Hooks customizados (sessão, monitor, toast, scroll, etc.)
 │   │   ├── pages/           # LandingPage, LoginPage, ForgotPasswordPage, ResetPasswordPage
-│   │   ├── services/        # Cliente HTTP (api.js)
+│   │   ├── services/        # Cliente HTTP tipado (api.ts)
+│   │   ├── types/           # Interfaces e tipos estritos da UI e API
 │   │   ├── utils/           # Formatadores e configuração de status
-│   │   ├── App.jsx          # Dashboard principal
-│   │   └── main.jsx         # Roteamento React Router
+│   │   ├── App.tsx          # Dashboard principal
+│   │   └── main.tsx         # Roteamento React Router
+│   ├── tsconfig.json
 │   └── .env.example
 └── docs/                    # Documentação técnica detalhada
 ```

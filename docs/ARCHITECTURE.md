@@ -22,7 +22,7 @@ flowchart LR
 
 ## Fluxo do Motor de Keep-Alive (`pingerService`)
 
-O módulo [backend/src/services/pingerService.js](../backend/src/services/pingerService.js) é responsável por executar os pings e consolidar os resultados:
+O módulo [backend/src/services/pingerService.ts](../backend/src/services/pingerService.ts) é responsável por executar os pings e consolidar os resultados:
 
 1. **Requisição HTTP:**
    - Executa `fetch(project.pingUrl, { method: 'GET' })` com `AbortSignal.timeout(55000)` (timeout de 55 segundos).
@@ -75,11 +75,11 @@ sequenceDiagram
 ## Fluxo de Autenticação e Autorização
 
 ### Sessão com Supabase Auth
-- O cliente singleton `supabase` em [backend/src/config/supabase.js](../backend/src/config/supabase.js) utiliza `SUPABASE_SERVICE_ROLE_KEY` com `persistSession: false`.
+- O cliente singleton `supabase` em [backend/src/config/supabase.ts](../backend/src/config/supabase.ts) utiliza `SUPABASE_SERVICE_ROLE_KEY` com `persistSession: false`.
 - Para operações de login (`signInWithPassword`), o backend instancia um cliente isolado via `createStatelessAuthClient()` para evitar que a sessão do usuário contamine o cliente administrativo singleton.
 - Ao registrar ou autenticar, o backend sincroniza o usuário na tabela `public.users` (`syncPublicUser`).
 
-### Middlewares de Acesso ([authMiddleware.js](../backend/src/middlewares/authMiddleware.js))
+### Middlewares de Acesso ([authMiddleware.ts](../backend/src/middlewares/authMiddleware.ts))
 - **`requireAuth`:** Extrai o token `Bearer` do cabeçalho `Authorization`, valida via `supabase.auth.getUser(token)` e popula `req.user`. Retorna `401` se ausente ou inválido.
 - **`attachOptionalUser`:** Valida o token quando presente, mas permite acesso anônimo (`req.user = null`) para rotas de leitura pública/visitante.
   - Em modo visitante, o repositório retorna apenas projetos públicos/legados (`user_id IS NULL`).
@@ -94,7 +94,7 @@ sequenceDiagram
 
 ## Fluxo de Alertas (`alertService`)
 
-O módulo [backend/src/services/alertService.js](../backend/src/services/alertService.js) envia e-mails via **Brevo API** (`https://api.brevo.com/v3/smtp/email`) com timeout de 10s nas seguintes situações:
+O módulo [backend/src/services/alertService.ts](../backend/src/services/alertService.ts) envia e-mails via **Brevo API** (`https://api.brevo.com/v3/smtp/email`) com timeout de 10s nas seguintes situações:
 
 - **Indisponibilidade:** Quando `log.status === 'OFFLINE'`.
 - **Recuperação:** Quando `previousStatus === 'OFFLINE'` e `log.status === 'ONLINE'`.

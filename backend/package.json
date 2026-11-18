@@ -1,18 +1,26 @@
 {
   "name": "monitoramento-keep-alive",
   "version": "1.0.0",
-  "description": "Sistema de monitoramento e Keep-Alive de projetos e bancos de dados com Node.js, Express e Supabase",
+  "description": "Sistema de monitoramento e Keep-Alive de projetos e bancos de dados com Node.js, Express, TypeScript e Supabase",
   "type": "module",
-  "main": "src/server.js",
+  "main": "src/server.ts",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "express-rate-limit": "^8.7.4"
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }
