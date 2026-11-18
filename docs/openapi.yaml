@@ -1,0 +1,549 @@
+openapi: 3.0.3
+info:
+  title: Keep-Alive Monitor API
+  version: 1.0.0
+  description: >-
+    API REST para monitoramento de disponibilidade, latência, Keep-Alive e
+    alertas de serviços web e bancos de dados.
+servers:
+  - url: http://localhost:3333/api
+    description: Servidor de desenvolvimento local
+
+tags:
+  - name: Health
+    description: Verificação de saúde da API
+  - name: Auth
+    description: Autenticação, sessão e recuperação de senha
+  - name: Projects
+    description: Gerenciamento de projetos monitorados e pings manuais
+  - name: Monitoring
+    description: Logs recentes e execução em lote via Cron
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtido via Supabase Auth no login/registro.
+    cronSecret:
+      type: apiKey
+      in: header
+      name: x-cron-secret
+      description: Segredo configurado na variável de ambiente CRON_SECRET.
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+
+    AuthSessionResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    PingLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        projectId:
+          type: string
+          format: uuid
+        httpStatus:
+          type: integer
+        status:
+          type: string
+          enum: [ONLINE, COLD_START, OFFLINE]
+        httpLatencyMs:
+          type: integer
+        dbLatencyMs:
+          type: integer
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+        triggerType:
+          type: string
+          enum: [CRON, MANUAL]
+        createdAt:
+          type: string
+          format: date-time
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        notificationEmail:
+          type: string
+          format: email
+          nullable: true
+        name:
+          type: string
+        pingUrl:
+          type: string
+          format: uri
+        secretHeader:
+          type: string
+          nullable: true
+        providerInfo:
+          type: string
+        isActive:
+          type: boolean
+        lastStatus:
+          type: string
+          enum: [ONLINE, COLD_START, OFFLINE, PENDING]
+        lastPingAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastLatencyMs:
+          type: integer
+          nullable: true
+        dbSizeMb:
+          type: number
+          format: double
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        pingLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PingLog'
+
+    ProjectsSummary:
+      type: object
+      properties:
+        totalProjects:
+          type: integer
+        onlineCount:
+          type: integer
+        offlineCount:
+          type: integer
+        coldStartCount:
+          type: integer
+
+    ProjectCreateInput:
+      type: object
+      required: [name, pingUrl, providerInfo]
+      properties:
+        name:
+          type: string
+        pingUrl:
+          type: string
+          format: uri
+        providerInfo:
+          type: string
+        secretHeader:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+          default: true
+
+    ProjectUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        pingUrl:
+          type: string
+          format: uri
+        providerInfo:
+          type: string
+        secretHeader:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Verifica a saúde da API
+      responses:
+        '200':
+          description: API operacional
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: monitoramento-keep-alive
+                  uptimeSeconds:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Cadastra um novo usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '201':
+          description: Usuário criado e sessão iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: E-mail já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autentica um usuário existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Sessão autenticada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Credenciais inválidas
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Retorna o usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuário atual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Não autorizado
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicita link de redefinição de senha por e-mail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Solicitação processada
+        '400':
+          description: E-mail inválido
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Redefine a senha com token HMAC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Senha atualizada com sucesso
+        '400':
+          description: Token inválido/expirado ou senha inválida
+
+  /projects:
+    get:
+      tags: [Projects]
+      summary: Lista projetos visíveis ao usuário (ou públicos para visitantes)
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de projetos e resumo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    $ref: '#/components/schemas/ProjectsSummary'
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+    post:
+      tags: [Projects]
+      summary: Cria um novo projeto monitorado
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateInput'
+      responses:
+        '201':
+          description: Projeto criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Não autorizado
+
+  /projects/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Projects]
+      summary: Busca um projeto por ID com até 50 logs recentes
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Detalhes do projeto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Projeto não encontrado
+    patch:
+      tags: [Projects]
+      summary: Atualiza campos de um projeto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateInput'
+      responses:
+        '200':
+          description: Projeto atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Dados inválidos
+        '401':
+          description: Não autorizado
+        '403':
+          description: Sem permissão
+        '404':
+          description: Projeto não encontrado
+    delete:
+      tags: [Projects]
+      summary: Remove um projeto
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Projeto removido
+        '401':
+          description: Não autorizado
+        '403':
+          description: Sem permissão
+        '404':
+          description: Projeto não encontrado
+
+  /projects/{id}/ping:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Projects]
+      summary: Dispara ping manual em um projeto
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Ping executado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  project:
+                    $ref: '#/components/schemas/Project'
+                  log:
+                    $ref: '#/components/schemas/PingLog'
+        '401':
+          description: Não autorizado
+        '404':
+          description: Projeto não encontrado
+
+  /logs:
+    get:
+      tags: [Monitoring]
+      summary: Lista os 30 logs mais recentes
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PingLog'
+
+  /cron/ping-all:
+    post:
+      tags: [Monitoring]
+      summary: Executa ping em lote em todos os projetos ativos e limpa logs > 60 dias
+      security:
+        - cronSecret: []
+      responses:
+        '200':
+          description: Execução em lote finalizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  total:
+                    type: integer
+                  online:
+                    type: integer
+                  cold_start:
+                    type: integer
+                  offline:
+                    type: integer
+                  failedExecutions:
+                    type: integer
+                  cleanedLogsCount:
+                    type: integer
+                  details:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        projectId:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        status:
+                          type: string
+                        httpStatus:
+                          type: integer
+                        httpLatencyMs:
+                          type: integer
+        '401':
+          description: Header x-cron-secret inválido ou ausente

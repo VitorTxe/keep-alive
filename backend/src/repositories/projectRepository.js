@@ -63,12 +63,18 @@ export async function findProjectByIdWithLogs(id, logLimit = 50) {
   return mapProjectFromDb(data);
 }
 
-export async function findActiveProjects() {
-  const { data, error } = await supabase
+export async function findActiveProjects(userId = null) {
+  let query = supabase
     .from('projects')
     .select('*')
     .eq('is_active', true)
     .order('created_at', { ascending: true });
+
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throwSupabaseError('[ProjectRepository] Erro ao listar projetos ativos', error);

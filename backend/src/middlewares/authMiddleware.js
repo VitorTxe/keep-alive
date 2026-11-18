@@ -97,3 +97,20 @@ export async function requireAuth(req, res, next) {
     });
   }
 }
+
+/**
+ * Permite execução via CRON_SECRET (automações) ou via JWT de usuário autenticado (painel).
+ */
+export async function verifyCronOrUser(req, res, next) {
+  const receivedSecret = req.headers['x-cron-secret'];
+  if (receivedSecret) {
+    return verifyCronSecret(req, res, next);
+  }
+
+  const token = extractBearerToken(req);
+  if (token) {
+    return requireAuth(req, res, next);
+  }
+
+  return verifyCronSecret(req, res, next);
+}

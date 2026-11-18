@@ -159,7 +159,7 @@ export default function App() {
       showToast({
         type: 'error',
         title: 'Erro ao pingar todos',
-        message: error.message || 'Verifique o CRON_SECRET configurado.',
+        message: error.message || 'Não foi possível executar o ping em lote.',
       });
     } finally {
       setIsPingingAll(false);

@@ -25,7 +25,11 @@ export async function triggerSinglePing(req, res, next) {
 
 export async function triggerCronPingAll(req, res, next) {
   try {
-    const summary = await pingAllActiveProjects('CRON');
+    const isUserTrigger = Boolean(req.user?.id);
+    const summary = await pingAllActiveProjects(
+      isUserTrigger ? 'MANUAL' : 'CRON',
+      req.user?.id ?? null
+    );
 
     return res.status(200).json({
       message: 'Execução em lote finalizada.',

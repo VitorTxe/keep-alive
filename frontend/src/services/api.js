@@ -5,10 +5,6 @@ function getAuthToken() {
   return window.localStorage.getItem('AUTH_TOKEN') || '';
 }
 
-function getCronSecret() {
-  return typeof window !== 'undefined' ? window.localStorage.getItem('CRON_SECRET') || '' : '';
-}
-
 async function request(endpoint, options = {}) {
   const { headers: customHeaders = {}, ...restOptions } = options;
   const token = getAuthToken();
@@ -104,10 +100,8 @@ export function confirmPasswordReset({ token, password }) {
   });
 }
 
-export function pingAllProjects(cronSecret) {
-  const resolvedSecret = cronSecret || getCronSecret();
+export function pingAllProjects() {
   return request('/cron/ping-all', {
     method: 'POST',
-    headers: resolvedSecret ? { 'x-cron-secret': resolvedSecret } : {},
   });
 }

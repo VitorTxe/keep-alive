@@ -121,8 +121,8 @@ export async function pingSingleProject(project, triggerType = 'CRON') {
 /**
  * Executa ping paralelo em todos os projetos ativos e limpa logs com mais de 60 dias.
  */
-export async function pingAllActiveProjects(triggerType = 'CRON') {
-  const activeProjects = await findActiveProjects();
+export async function pingAllActiveProjects(triggerType = 'CRON', userId = null) {
+  const activeProjects = await findActiveProjects(userId);
 
   const settledResults = await Promise.allSettled(
     activeProjects.map((project) => pingSingleProject(project, triggerType))
