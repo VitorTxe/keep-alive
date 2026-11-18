@@ -1,0 +1,32 @@
+name: Keep-Alive Cron Trigger
+
+on:
+  schedule:
+    # Roda toda Segunda (1) e Quinta-feira (4) às 12:00 UTC (09:00 Horário de Brasília)
+    - cron: '0 12 * * 1,4'
+  
+  # Permite clicar em "Run workflow" manualmente na aba Actions do GitHub para testar
+  workflow_dispatch:
+
+jobs:
+  trigger-panel-ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acordar Painel e Pingar Todos os Projetos
+        run: |
+          echo "Disparando bateria de pings no painel..."
+          response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.PANEL_API_URL }}/api/cron/ping-all" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 180)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "Resposta da API: $body"
+          echo "Status HTTP: $http_code"
+          
+          if [ "$http_code" -ne 200 ]; then
+            echo "Falha ao executar o cron job!"
+            exit 1
+          fi
