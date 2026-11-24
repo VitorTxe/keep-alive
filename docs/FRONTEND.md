@@ -46,3 +46,10 @@ Composta por seções modulares animadas com **Framer Motion** e rolagem suave v
 - Para o disparo em lote (`pingAllProjects`), lê `CRON_SECRET` do `localStorage` ou argumento opcional e envia no cabeçalho `x-cron-secret`.
 - O Dashboard (`App.tsx` via `useDashboardMonitor.ts`) executa polling automático a cada **60 segundos** (`setInterval(..., 60000)`) para manter os dados atualizados.
 - Visitantes não autenticados podem visualizar o dashboard em modo somente leitura; tentativas de criar, editar, excluir ou pingar exibem um toast solicitando login.
+
+## Testes End-to-End (Playwright)
+
+- **Configuração ([playwright.config.ts](../frontend/playwright.config.ts)):** Executa no Chromium iniciando automaticamente o servidor Vite na porta dedicada `5179`.
+- **Mock de API ([mockApi.ts](../frontend/e2e/helpers/mockApi.ts)):** Intercepta `**/api/**` com estado em memória por teste (`projects`, `logs` e sessão JWT) para garantir execução determinística sem depender do Supabase remoto.
+- **Suíte ([dashboard.spec.ts](../frontend/e2e/dashboard.spec.ts)):** Cobre visualização de visitante, busca/filtros de status, bloqueio de ações sem login, fluxo completo autenticado (login, criação, ping manual, pausa, edição e exclusão) e tratamento de erro HTTP `500`.
+- **Execução:** `npm --prefix frontend run test:e2e` (ou `test:e2e:ui` para modo interativo).

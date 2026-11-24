@@ -7,7 +7,7 @@ Este documento descreve a arquitetura em camadas do **Keep-Alive Monitor** e os 
 O sistema segue uma arquitetura cliente-servidor desacoplada:
 
 - **Frontend (SPA React + Vite):** Renderiza a Landing Page institucional, fluxo de autenticação e o Dashboard de monitoramento. Comunica-se exclusivamente com a API REST do backend via `fetch`.
-- **Backend (Express REST API):** Organizado em camadas (`routes` → `middlewares` → `controllers` → `services` / `repositories` → `config`). Toda regra de negócio, medição de latência, envio de e-mails e acesso ao banco ocorre no servidor.
+- **Backend (Express REST API):** Organizado em camadas (`routes` → `middlewares` → `controllers` → `services` / `repositories` → `config`), com a criação do `app` desacoplada em [backend/src/app.ts](../backend/src/app.ts) e inicialização HTTP em [backend/src/server.ts](../backend/src/server.ts). Toda regra de negócio, medição de latência, envio de e-mails e acesso ao banco ocorre no servidor.
 - **Persistência e Auth (Supabase):** Armazena usuários, projetos e logs em PostgreSQL e gerencia autenticação JWT via Supabase Auth.
 
 ```mermaid
@@ -100,3 +100,10 @@ O módulo [backend/src/services/alertService.ts](../backend/src/services/alertSe
 - **Recuperação:** Quando `previousStatus === 'OFFLINE'` e `log.status === 'ONLINE'`.
 
 Os alertas só são disparados se o projeto possuir `notificationEmail` preenchido e as variáveis `BREVO_API_KEY` e `BREVO_SENDER_EMAIL` estiverem configuradas.
+
+## Segurança HTTP, Rate Limit e Testes E2E (Backend)
+
+- **Proxy & CORS ([app.ts](../backend/src/app.ts)):** Configurado `app.set('trust proxy', 1)` para leitura correta de `X-Forwarded-For` atrás de proxies reversos. A política de CORS valida origens via `FRONTEND_URL` e `CORS_ORIGINS`, liberando portas locais de desenvolvimento fora de `production` e chamadas sem `Origin` (cron/healthcheck), retornando `403` para origens não autorizadas.
+- **Rate Limiting ([rateLimitMiddleware.ts](../backend/src/middlewares/rateLimitMiddleware.ts)):** Protege `/api` contra *flood* e *brute-force* com três faixas por IP (`120 req/min` global exceto `/health`, `10 req/15min` em rotas públicas de `/auth` e `20 req/min` nos endpoints de ping), retornando HTTP `429` e headers `RateLimit-*`.
+- **GlobalErrorHandler ([app.ts](../backend/src/app.ts)):** Centraliza exceções encaminhadas via `next(error)`, registrando stack trace via `console.error` apenas para erros internos (`statusCode >= 500`).
+- **Testes E2E HTTP ([api.test.ts](../backend/tests/e2e/api.test.ts)):** Suíte com **Vitest + Supertest** executada contra o `app` Express em memória (`npm --prefix backend test`), validando `/api/health`, 404, CORS, autenticação/autorização (`requireAuth`, `verifyCronSecret`) e rate limit.

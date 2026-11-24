@@ -1,14 +1,20 @@
 # Referência da API REST
 
-Todas as rotas estão montadas sob o prefixo `/api` (definido em [backend/src/server.ts](../backend/src/server.ts)).
+Todas as rotas estão montadas sob o prefixo `/api` (definido em [backend/src/app.ts](../backend/src/app.ts)).
 
 > A especificação formal em formato **OpenAPI 3.0** está disponível em [openapi.yaml](openapi.yaml) e pode ser importada diretamente no Postman, Insomnia ou Swagger Editor.
 
-## Autenticação e Headers
+## Autenticação, CORS e Rate Limit
 
 - **Rotas autenticadas:** Enviar `Authorization: Bearer <accessToken>`.
 - **Rota de Cron:** Enviar `x-cron-secret: <CRON_SECRET>`.
 - **Formato:** Todas as requisições e respostas utilizam `application/json`.
+- **CORS:** Valida o header `Origin` contra `FRONTEND_URL`, `CORS_ORIGINS` (lista separada por vírgula) e portas locais (`5173`/`4173`) fora de produção. Requisições sem `Origin` (cron jobs, healthchecks e chamadas server-to-server) são permitidas; origens não autorizadas recebem **HTTP `403`**. Headers permitidos: `Content-Type`, `Authorization` e `x-cron-secret`.
+- **Rate Limiting (`RateLimit-*` RFC draft-7):**
+  - **Global (`/api`):** até **120 requisições/minuto** por IP (ignora `/api/health`).
+  - **Autenticação (`/api/auth/register`, `/login`, `/forgot-password`, `/reset-password`):** até **10 requisições a cada 15 minutos** por IP.
+  - **Pings (`/api/projects/:id/ping` e `/api/cron/ping-all`):** até **20 requisições/minuto** por IP.
+  - Exceder qualquer limite retorna **HTTP `429 Too Many Requests`** com `{ "error": "..." }`.
 
 ---
 
