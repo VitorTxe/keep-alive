@@ -1,11 +1,15 @@
 import 'dotenv/config';
 import cors, { type CorsOptions } from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
+import { apiRateLimiter } from './middlewares/rateLimitMiddleware.js';
 import routes from './routes/index.js';
 import type { HttpError } from './types/index.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3333;
+
+// Garante identificação correta do IP do cliente atrás de proxies reversos (Render, Railway, Nginx, etc.)
+app.set('trust proxy', 1);
 
 const normalizeOrigin = (value: string): string => value.trim().replace(/\/$/, '');
 
@@ -58,7 +62,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
 
-app.use('/api', routes);
+app.use('/api', apiRateLimiter, routes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

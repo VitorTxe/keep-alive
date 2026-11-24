@@ -8,6 +8,7 @@ import {
   updateProject,
 } from '../controllers/projectController.js';
 import { attachOptionalUser, requireAuth } from '../middlewares/authMiddleware.js';
+import { pingRateLimiter } from '../middlewares/rateLimitMiddleware.js';
 
 const router = Router();
 
@@ -16,6 +17,6 @@ router.get('/:id', attachOptionalUser, getProjectById);
 router.post('/', requireAuth, createProject);
 router.patch('/:id', requireAuth, updateProject);
 router.delete('/:id', requireAuth, deleteProject);
-router.post('/:id/ping', requireAuth, triggerSinglePing);
+router.post('/:id/ping', pingRateLimiter, requireAuth, triggerSinglePing);
 
 export default router;
