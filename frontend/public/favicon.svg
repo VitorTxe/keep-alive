@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="pulse-grad" x1="12" y1="32" x2="52" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="hsl(160 84% 39%)" />
+      <stop offset="55%" stop-color="hsl(158 64% 52%)" />
+      <stop offset="100%" stop-color="hsl(152 76% 62%)" />
+    </linearGradient>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="hsl(240 6% 12%)" />
+      <stop offset="100%" stop-color="hsl(240 10% 4%)" />
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#bg-grad)" stroke="hsl(240 4% 20%)" stroke-width="2" />
+
+  <path
+    d="M12 34H20L25.5 20L32.5 45L38.5 28L43 34H52"
+    stroke="url(#pulse-grad)"
+    stroke-width="4.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <circle cx="49" cy="15" r="4" fill="hsl(158 64% 52%)" />
+  <circle cx="49" cy="15" r="7" fill="hsl(158 64% 52%)" fill-opacity="0.22" />
+</svg>
